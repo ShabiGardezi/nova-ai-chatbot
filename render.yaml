@@ -1,0 +1,19 @@
+# Render Blueprint — deploy with "New + → Blueprint" and point at this repo.
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: nova-ai-chatbot
+    runtime: python
+    plan: free
+    # Python version is taken from .python-version (3.12.8).
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # Set the real value in the Render dashboard (kept secret, not in git).
+      - key: OPENAI_API_KEY
+        sync: false
+      # Free, OpenAI-compatible provider (Groq). Change if you use another.
+      - key: OPENAI_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: OPENAI_MODEL
+        value: llama-3.3-70b-versatile
