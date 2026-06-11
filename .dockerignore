@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+.venv/
+
+# Secrets and local database
+.env
+*.db
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Git and tooling
+.git/
+.gitignore
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
