@@ -1,3 +1,14 @@
+---
+title: Nova AI Chatbot
+emoji: ✨
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # Nova · AI Chatbot
 
 A production-quality AI chatbot with both a **command-line** and a **modern web** interface, built on a clean, typed Python service layer.
