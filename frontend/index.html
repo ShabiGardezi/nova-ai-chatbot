@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A modern, minimal AI chatbot interface." />
+  <title>Nova · AI Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- Ambient floating particles (decorative, populated by JS) -->
+  <div class="particles" id="particles" aria-hidden="true"></div>
+
+  <!-- App shell: sidebar + main chat column -->
+  <div class="app" id="app">
+    <!-- Mobile backdrop for the slide-in sidebar -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+    <!-- ─────────────── Sidebar ─────────────── -->
+    <aside class="sidebar" id="sidebar" aria-label="Conversation navigation">
+      <header class="sidebar__header">
+        <div class="brand">
+          <span class="brand__mark brand__mark--animated" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+              <path d="M16 2l3.6 8.8L28 14l-8.4 3.2L16 26l-3.6-8.8L4 14l8.4-3.2L16 2z"
+                    fill="currentColor" />
+            </svg>
+          </span>
+          <span class="brand__name brand__name--gradient">Nova</span>
+        </div>
+        <button class="icon-btn sidebar__close" id="sidebarClose" aria-label="Close sidebar">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12" stroke-linecap="round" />
+          </svg>
+        </button>
+      </header>
+
+      <button class="new-chat" id="newChatBtn">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        New Chat
+      </button>
+
+      <nav class="history" aria-label="Conversation history">
+        <p class="history__label">Recent</p>
+        <ul class="history__list" id="historyList"></ul>
+        <p class="history__empty" id="historyEmpty" hidden>No conversations yet</p>
+      </nav>
+
+      <!-- Conversation statistics -->
+      <section class="stats glass" aria-label="Conversation statistics">
+        <p class="stats__label">This conversation</p>
+        <div class="stats__grid">
+          <div class="stat">
+            <span class="stat__value" id="statMessages">0</span>
+            <span class="stat__name">Messages</span>
+          </div>
+          <div class="stat">
+            <span class="stat__value" id="statTokens">0</span>
+            <span class="stat__name">Tokens</span>
+          </div>
+        </div>
+      </section>
+
+      <footer class="sidebar__footer">
+        <button class="ghost-btn" id="settingsBtn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Settings
+        </button>
+      </footer>
+    </aside>
+
+    <!-- ─────────────── Main chat ─────────────── -->
+    <main class="chat" aria-label="Chat">
+      <header class="topbar">
+        <button class="icon-btn topbar__menu" id="menuBtn" aria-label="Open sidebar">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" />
+          </svg>
+        </button>
+
+        <!-- Personality selector -->
+        <div class="persona" id="personaSelector" role="tablist" aria-label="Assistant personality"></div>
+
+        <div class="topbar__right">
+          <span class="badge badge--soft" id="messageBadge" title="Messages in this conversation" aria-live="polite">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span id="messageCount">0</span>
+          </span>
+          <span class="badge badge--soft" id="tokenBadge" title="Tokens used this conversation" aria-live="polite">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span id="tokenCount">0</span>
+          </span>
+          <span class="badge" id="personaBadge" aria-live="polite">General Assistant</span>
+          <button class="icon-btn" id="clearBtn" aria-label="Clear conversation" title="Clear conversation">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable message viewport -->
+      <section class="messages" id="messages" aria-live="polite">
+        <!-- Welcome / empty state (SaaS landing style) -->
+        <div class="welcome" id="welcome">
+          <!-- Pure-CSS empty-state illustration: orbiting rings around an orb -->
+          <div class="orb" aria-hidden="true">
+            <span class="orb__core"></span>
+            <span class="orb__ring orb__ring--1"></span>
+            <span class="orb__ring orb__ring--2"></span>
+            <span class="orb__ring orb__ring--3"></span>
+            <span class="orb__dot orb__dot--1"></span>
+            <span class="orb__dot orb__dot--2"></span>
+            <span class="orb__dot orb__dot--3"></span>
+          </div>
+
+          <span class="welcome__eyebrow">Powered by streaming AI</span>
+          <h1 class="welcome__title">Your intelligent workspace, ready when you are</h1>
+          <p class="welcome__subtitle">
+            Nova streams answers in real time across specialized personalities —
+            from system design to interview prep. Pick a mode above and start the conversation.
+          </p>
+
+          <div class="welcome__features">
+            <span class="feature-chip">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Real-time streaming
+            </span>
+            <span class="feature-chip">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 0v10l6 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Saved conversations
+            </span>
+            <span class="feature-chip">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6M7 12H1" stroke-linecap="round"/></svg>
+              Multiple personalities
+            </span>
+          </div>
+
+          <div class="suggestions" id="suggestions">
+            <button class="suggestion" data-prompt="Design a scalable URL shortener and explain the trade-offs.">
+              <strong>Design a system</strong>
+              <span>Scalable URL shortener architecture</span>
+            </button>
+            <button class="suggestion" data-prompt="Give me a mock interview question on data structures.">
+              <strong>Mock interview</strong>
+              <span>Practice a data-structures question</span>
+            </button>
+            <button class="suggestion" data-prompt="Explain async/await in Python with a simple example.">
+              <strong>Explain a concept</strong>
+              <span>async/await in Python</span>
+            </button>
+            <button class="suggestion" data-prompt="Summarize the key ideas of clean architecture.">
+              <strong>Summarize</strong>
+              <span>Clean architecture in a nutshell</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Message thread is injected here -->
+        <div class="thread" id="thread"></div>
+      </section>
+
+      <!-- Input dock -->
+      <footer class="composer">
+        <form class="composer__box" id="composerForm">
+          <textarea
+            id="input"
+            class="composer__input"
+            placeholder="Message Nova…  (Enter to send, Shift+Enter for newline)"
+            rows="1"
+            maxlength="4000"
+            autocomplete="off"
+          ></textarea>
+          <div class="composer__actions">
+            <span class="char-counter" id="charCounter">0 / 4000</span>
+            <button type="submit" class="send-btn" id="sendBtn" aria-label="Send message" disabled>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </form>
+        <p class="composer__hint">Nova can make mistakes. Verify important information.</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Settings modal -->
+  <div class="modal" id="settingsModal" hidden>
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__card glass" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <header class="modal__header">
+        <h2 id="settingsTitle">Settings</h2>
+        <button class="icon-btn" data-close-modal aria-label="Close settings">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12" stroke-linecap="round" />
+          </svg>
+        </button>
+      </header>
+      <div class="modal__body">
+        <div class="setting-row">
+          <span>Model</span>
+          <code id="settingModel">—</code>
+        </div>
+        <div class="setting-row">
+          <span>Theme</span>
+          <code>Dark</code>
+        </div>
+        <div class="setting-row">
+          <span>Streaming</span>
+          <code>Enabled</code>
+        </div>
+        <p class="modal__note">
+          Nova is a portfolio demo built with FastAPI and vanilla JavaScript.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
